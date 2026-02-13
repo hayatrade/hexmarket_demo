@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>竞猜大师 - Prediction Market</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #F5F6FA; --surface: #FFFFFF; --border: rgba(0,0,0,0.06); --border-s: rgba(0,0,0,0.10);
+    --text: #1A1D2E; --text2: #6B7084; --text3: #9DA1B5;
+    --green: #00A878; --green-bg: rgba(0,168,120,0.08); --green-bd: rgba(0,168,120,0.2);
+    --red: #E5384F; --red-bg: rgba(229,56,79,0.08); --red-bd: rgba(229,56,79,0.2);
+    --accent: #3366FF; --accent-bg: rgba(51,102,255,0.06); --accent-bd: rgba(51,102,255,0.15);
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.03);
+    --shadow-h: 0 2px 8px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.05);
+    --mono: 'DM Mono', monospace;
+    --sans: 'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); font-family: var(--sans); color: var(--text); overflow-x: hidden; }
+  ::-webkit-scrollbar { display: none; }
+  input, textarea { font-family: var(--sans); }
+  input::placeholder, textarea::placeholder { color: #B8BCCE; }
+  #root { max-width: 420px; margin: 0 auto; min-height: 100vh; position: relative; }
+
+  /* Animations */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+  @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+  @keyframes confetti1 { 0% { transform: translateY(0) rotate(0deg); opacity:1; } 100% { transform: translateY(-120px) rotate(360deg) translateX(40px); opacity:0; } }
+  @keyframes confetti2 { 0% { transform: translateY(0) rotate(0deg); opacity:1; } 100% { transform: translateY(-100px) rotate(-270deg) translateX(-30px); opacity:0; } }
+  @keyframes confetti3 { 0% { transform: translateY(0) rotate(0deg); opacity:1; } 100% { transform: translateY(-140px) rotate(450deg) translateX(20px); opacity:0; } }
+  .fade-up { animation: fadeUp 0.35s ease-out both; }
+  .card-hover { transition: all 0.2s ease; }
+  .card-hover:hover { box-shadow: var(--shadow-h); transform: translateY(-2px); }
+  .card-hover:active { transform: scale(0.985); }
+  .btn-press { transition: all 0.15s ease; }
+  .btn-press:active { transform: scale(0.96); }
+  .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 2000;
+    background: var(--text); color: #fff; padding: 12px 24px; border-radius: 12px;
+    font-size: 14px; font-weight: 600; animation: fadeUp 0.3s ease-out; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+/* ═══════════════ DATA ═══════════════ */
+const INIT_MARKETS = [
+  { id:1, title:"2026年世界杯决赛：巴西 vs 法国", category:"体育", emoji:"⚽", yesPrice:0.62, noPrice:0.38, volume:1285400, liquidity:456000, endDate:"2026-07-19", trending:true, change24h:0.05, description:"2026年FIFA世界杯决赛中，巴西队是否会战胜法国队？", comments:342, traders:8923, history:[0.45,0.48,0.52,0.55,0.50,0.53,0.58,0.60,0.57,0.62] },
+  { id:2, title:"BTC 2026年6月突破$150,000", category:"加密货币", emoji:"₿", yesPrice:0.41, noPrice:0.59, volume:3842100, liquidity:1200000, endDate:"2026-06-30", trending:true, change24h:-0.03, description:"比特币价格是否会在2026年6月30日之前达到$150,000？", comments:1205, traders:24510, history:[0.55,0.52,0.48,0.44,0.46,0.43,0.40,0.38,0.42,0.41] },
+  { id:3, title:"OpenAI 2026年Q2前发布GPT-5", category:"科技", emoji:"🤖", yesPrice:0.73, noPrice:0.27, volume:2156000, liquidity:780000, endDate:"2026-06-30", trending:false, change24h:0.02, description:"OpenAI是否会在2026年第二季度结束前正式发布GPT-5模型？", comments:567, traders:12340, history:[0.60,0.63,0.65,0.68,0.66,0.70,0.71,0.69,0.72,0.73] },
+  { id:4, title:"A股上证指数突破4000点", category:"金融", emoji:"📈", yesPrice:0.35, noPrice:0.65, volume:5621000, liquidity:2100000, endDate:"2026-12-31", trending:true, change24h:0.08, description:"上证综合指数是否会在2026年年底前突破4000点？", comments:2341, traders:45120, history:[0.20,0.22,0.25,0.28,0.26,0.30,0.32,0.29,0.33,0.35] },
+  { id:5, title:"特斯拉全自动驾驶获中国审批", category:"科技", emoji:"🚗", yesPrice:0.18, noPrice:0.82, volume:987000, liquidity:340000, endDate:"2026-12-31", trending:false, change24h:-0.01, description:"特斯拉FSD全自动驾驶系统是否会在2026年获得中国监管部门的正式审批？", comments:189, traders:5670, history:[0.25,0.23,0.20,0.22,0.19,0.21,0.18,0.17,0.19,0.18] },
+  { id:6, title:"英伟达市值超越苹果成全球第一", category:"金融", emoji:"💎", yesPrice:0.56, noPrice:0.44, volume:1876000, liquidity:670000, endDate:"2026-12-31", trending:true, change24h:0.04, description:"英伟达是否会在2026年内市值超越苹果成为全球市值最高的公司？", comments:456, traders:9870, history:[0.40,0.43,0.45,0.48,0.50,0.52,0.49,0.53,0.55,0.56] },
+  { id:7, title:"中国央行2026年降息超50个基点", category:"金融", emoji:"🏦", yesPrice:0.44, noPrice:0.56, volume:3245000, liquidity:1150000, endDate:"2026-12-31", trending:false, change24h:0.01, description:"中国人民银行是否会在2026年内累计降息超过50个基点？", comments:678, traders:15600, history:[0.38,0.40,0.42,0.41,0.43,0.45,0.44,0.42,0.43,0.44] },
+  { id:8, title:"SpaceX星舰成功载人登月", category:"科技", emoji:"🚀", yesPrice:0.08, noPrice:0.92, volume:4521000, liquidity:1800000, endDate:"2026-12-31", trending:true, change24h:0.00, description:"SpaceX的星舰是否会在2026年完成首次载人登月任务？", comments:3210, traders:67800, history:[0.12,0.11,0.10,0.09,0.10,0.09,0.08,0.09,0.08,0.08] },
+];
+
+const INIT_POSITIONS = [
+  { marketId:1, side:"yes", shares:150, avgPrice:0.55 },
+  { marketId:2, side:"no", shares:200, avgPrice:0.52 },
+  { marketId:4, side:"yes", shares:500, avgPrice:0.28 },
+];
+
+const LEADERBOARD = [
+  { rank:1, name:"量化之王", avatar:"👑", profit:128450, winRate:0.78, trades:342 },
+  { rank:2, name:"币圈老韭菜", avatar:"🦁", profit:95200, winRate:0.72, trades:256 },
+  { rank:3, name:"预言家小明", avatar:"🔮", profit:87600, winRate:0.69, trades:189 },
+  { rank:4, name:"价值投资者", avatar:"📊", profit:76300, winRate:0.65, trades:423 },
+  { rank:5, name:"DeFi大神", avatar:"⚡", profit:65800, winRate:0.71, trades:167 },
+  { rank:6, name:"我是韭菜", avatar:"🌿", profit:54200, winRate:0.62, trades:534 },
+  { rank:7, name:"梭哈选手", avatar:"🎰", profit:43100, winRate:0.58, trades:89 },
+  { rank:8, name:"稳健派", avatar:"🛡️", profit:38900, winRate:0.74, trades:612 },
+];
+
+const CATEGORIES = ["全部","🔥 热门","加密货币","科技","金融","体育"];
+const ACTIVITY_FEED = [
+  { user:"量化之王", action:"买入看涨", market:"BTC突破$150K", amount:500, time:"2分钟前" },
+  { user:"DeFi大神", action:"买入看跌", market:"A股突破4000", amount:200, time:"5分钟前" },
+  { user:"预言家小明", action:"买入看涨", market:"GPT-5发布", amount:1000, time:"8分钟前" },
+  { user:"币圈老韭菜", action:"卖出看涨", market:"英伟达超苹果", amount:300, time:"12分钟前" },
+];
+
+/* ═══════════════ UTILS ═══════════════ */
+const fmt = n => { if(n>=1e6) return (n/1e6).toFixed(1)+"M"; if(n>=1e3) return (n/1e3).toFixed(1)+"K"; return n+""; };
+
+function MiniChart({ data, color, w=80, h=28 }) {
+  const mn=Math.min(...data), mx=Math.max(...data), r=mx-mn||0.01;
+  const pts = data.map((v,i)=>`${(i/(data.length-1))*w},${h-((v-mn)/r)*(h-4)-2}`).join(" ");
+  // area fill
+  const area = `0,${h} ${pts} ${w},${h}`;
+  return (
+    <svg width={w} height={h} style={{display:"block"}}>
+      <polygon points={area} fill={color} fillOpacity="0.08" />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function ProbBar({yes}) {
+  return (
+    <div style={{display:"flex",borderRadius:99,overflow:"hidden",height:5,width:"100%",background:"var(--red-bg)"}}>
+      <div style={{width:`${yes*100}%`,background:"linear-gradient(90deg,var(--green),#00C896)",transition:"width 0.6s ease",borderRadius:99}} />
+    </div>
+  );
+}
+
+function Toast({msg, onDone}) {
+  useEffect(()=>{ const t=setTimeout(onDone,2200); return ()=>clearTimeout(t); },[]);
+  return <div className="toast">{msg}</div>;
+}
+
+/* ═══════════════ MARKET CARD ═══════════════ */
+function MarketCard({market, onClick, delay=0}) {
+  const pos = market.change24h >= 0;
+  return (
+    <div className="card-hover fade-up" onClick={onClick}
+      style={{background:"var(--surface)",borderRadius:16,padding:16,cursor:"pointer",
+        border:"1px solid var(--border)",boxShadow:"var(--shadow)",position:"relative",overflow:"hidden",
+        animationDelay:`${delay}ms`}}>
+      {market.trending && (
+        <div style={{position:"absolute",top:0,right:0,background:"linear-gradient(135deg,#FF6B35,#E5384F)",
+          borderRadius:"0 16px 0 12px",padding:"4px 10px",fontSize:10,fontWeight:700,color:"#fff",letterSpacing:1}}>
+          🔥 HOT
+        </div>
+      )}
+      <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12}}>
+        <div style={{fontSize:26,background:"var(--accent-bg)",width:44,height:44,borderRadius:12,
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{market.emoji}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:10,color:"var(--text3)",fontWeight:600,letterSpacing:0.8,marginBottom:3,textTransform:"uppercase"}}>{market.category}</div>
+          <div style={{fontSize:14,fontWeight:700,color:"var(--text)",lineHeight:1.4,
+            display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{market.title}</div>
+        </div>
+      </div>
+      <ProbBar yes={market.yesPrice} />
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12}}>
+        <div style={{display:"flex",gap:20}}>
+          <div>
+            <div style={{fontSize:10,color:"var(--text3)",marginBottom:1}}>看涨</div>
+            <div style={{fontSize:18,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.yesPrice*100).toFixed(0)}¢</div>
+          </div>
+          <div>
+            <div style={{fontSize:10,color:"var(--text3)",marginBottom:1}}>看跌</div>
+            <div style={{fontSize:18,fontWeight:800,color:"var(--red)",fontFamily:"var(--mono)"}}>{(market.noPrice*100).toFixed(0)}¢</div>
+          </div>
+        </div>
+        <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
+          <MiniChart data={market.history} color={pos?"var(--green)":"var(--red)"} />
+          <div style={{fontSize:11,color:pos?"var(--green)":"var(--red)",fontWeight:700,fontFamily:"var(--mono)"}}>
+            {pos?"+":""}{(market.change24h*100).toFixed(0)}%
+          </div>
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:12,paddingTop:10,borderTop:"1px solid var(--border)"}}>
+        <span style={{fontSize:11,color:"var(--text3)"}}>📊 ¥{fmt(market.volume)}</span>
+        <span style={{fontSize:11,color:"var(--text3)"}}>👥 {fmt(market.traders)}人</span>
+        <span style={{fontSize:11,color:"var(--text3)"}}>⏰ {market.endDate}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════ MARKET DETAIL ═══════════════ */
+function MarketDetail({market, positions, onBack, onTrade, onToast}) {
+  const [side, setSide] = useState("yes");
+  const [amount, setAmount] = useState("");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [chartRange, setChartRange] = useState(2);
+  const [activeTab, setActiveTab] = useState("trade"); // trade | orderbook | activity
+
+  const price = side==="yes"? market.yesPrice : market.noPrice;
+  const shares = amount ? Math.floor(parseFloat(amount)/price) : 0;
+  const profit = shares*1 - (parseFloat(amount)||0);
+  const myPos = positions.filter(p=>p.marketId===market.id);
+
+  const confirmTrade = () => {
+    onTrade(market.id, side, shares, price, parseFloat(amount));
+    setShowConfirm(false);
+    setAmount("");
+    onToast(`✅ 成功买入 ${shares} 份${side==="yes"?"看涨":"看跌"}！`);
+  };
+
+  // Simulated orderbook data
+  const orderbook = {
+    bids: [{p:0.61,q:1200},{p:0.60,q:3400},{p:0.59,q:2800},{p:0.58,q:5100},{p:0.57,q:1900}],
+    asks: [{p:0.63,q:2100},{p:0.64,q:1800},{p:0.65,q:4200},{p:0.66,q:3100},{p:0.67,q:2400}],
+  };
+
+  return (
+    <div style={{paddingBottom:100}} className="fade-up">
+      {/* Header */}
+      <div style={{display:"flex",alignItems:"center",gap:12,padding:"14px 0",borderBottom:"1px solid var(--border)"}}>
+        <div onClick={onBack} className="btn-press"
+          style={{width:36,height:36,borderRadius:10,background:"var(--bg)",display:"flex",alignItems:"center",
+            justifyContent:"center",cursor:"pointer",fontSize:18,color:"var(--text2)",border:"1px solid var(--border)"}}>←</div>
+        <div style={{flex:1}}>
+          <div style={{fontSize:11,color:"var(--text3)",fontWeight:600}}>{market.category}</div>
+          <div style={{fontSize:15,fontWeight:700,color:"var(--text)"}}>{market.emoji} {market.title}</div>
+        </div>
+        <div className="btn-press" style={{padding:"6px 10px",borderRadius:8,background:"var(--accent-bg)",
+          border:"1px solid var(--accent-bd)",cursor:"pointer",fontSize:12,color:"var(--accent)",fontWeight:600}}>
+          🔗 分享
+        </div>
+      </div>
+
+      {/* Big price */}
+      <div style={{padding:"20px 0",textAlign:"center"}}>
+        <div style={{fontSize:11,color:"var(--text3)",marginBottom:4}}>当前概率</div>
+        <div style={{fontSize:52,fontWeight:900,color:"var(--green)",fontFamily:"var(--mono)",letterSpacing:-2}}>
+          {(market.yesPrice*100).toFixed(1)}%
+        </div>
+        <div style={{fontSize:13,color:market.change24h>=0?"var(--green)":"var(--red)",fontWeight:600}}>
+          24h {market.change24h>=0?"↑":"↓"} {Math.abs(market.change24h*100).toFixed(1)}%
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div style={{background:"var(--surface)",borderRadius:16,padding:16,marginBottom:14,border:"1px solid var(--border)",boxShadow:"var(--shadow)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:14}}>
+          {["1天","1周","1月","全部"].map((t,i)=>(
+            <div key={t} onClick={()=>setChartRange(i)} className="btn-press"
+              style={{padding:"5px 14px",borderRadius:8,cursor:"pointer",fontSize:12,fontWeight:600,
+                background:chartRange===i?"var(--green-bg)":"transparent",
+                color:chartRange===i?"var(--green)":"var(--text3)",
+                border:chartRange===i?"1px solid var(--green-bd)":"1px solid transparent"}}>{t}</div>
+          ))}
+        </div>
+        <MiniChart data={market.history} color="var(--green)" w={340} h={90} />
+        <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+          <span style={{fontSize:10,color:"var(--text3)"}}>低: {(Math.min(...market.history)*100).toFixed(0)}%</span>
+          <span style={{fontSize:10,color:"var(--text3)"}}>高: {(Math.max(...market.history)*100).toFixed(0)}%</span>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+        {[{l:"交易量",v:`¥${fmt(market.volume)}`},{l:"流动性",v:`¥${fmt(market.liquidity)}`},{l:"参与者",v:`${fmt(market.traders)}人`}].map(s=>(
+          <div key={s.l} style={{background:"var(--surface)",borderRadius:12,padding:12,textAlign:"center",border:"1px solid var(--border)"}}>
+            <div style={{fontSize:10,color:"var(--text3)",marginBottom:3}}>{s.l}</div>
+            <div style={{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"var(--mono)"}}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Description */}
+      <div style={{background:"var(--surface)",borderRadius:12,padding:14,marginBottom:14,border:"1px solid var(--border)"}}>
+        <div style={{fontSize:13,color:"var(--text2)",lineHeight:1.7}}>{market.description}</div>
+        <div style={{fontSize:11,color:"var(--text3)",marginTop:8}}>🗓 结算: {market.endDate} &nbsp; 💬 {market.comments}评论</div>
+      </div>
+
+      {/* My position in this market */}
+      {myPos.length > 0 && (
+        <div style={{background:"var(--accent-bg)",borderRadius:12,padding:14,marginBottom:14,border:"1px solid var(--accent-bd)"}}>
+          <div style={{fontSize:12,fontWeight:700,color:"var(--accent)",marginBottom:8}}>📌 我的持仓</div>
+          {myPos.map((p,i)=>{
+            const pnl = (market[p.side==="yes"?"yesPrice":"noPrice"] - p.avgPrice) * p.shares;
+            return (
+              <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <span style={{fontSize:13,color:"var(--text)"}}>
+                  <span style={{color:p.side==="yes"?"var(--green)":"var(--red)",fontWeight:700}}>{p.side==="yes"?"看涨":"看跌"}</span> · {p.shares}份 · 均价{(p.avgPrice*100).toFixed(0)}¢
+                </span>
+                <span style={{fontSize:13,fontWeight:800,color:pnl>=0?"var(--green)":"var(--red)",fontFamily:"var(--mono)"}}>
+                  {pnl>=0?"+":""}${pnl.toFixed(2)}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Tabs: Trade / Orderbook / Activity */}
+      <div style={{display:"flex",gap:4,marginBottom:14,background:"var(--bg)",borderRadius:12,padding:3}}>
+        {[{id:"trade",l:"下注交易"},{id:"orderbook",l:"订单簿"},{id:"activity",l:"动态"}].map(t=>(
+          <div key={t.id} onClick={()=>setActiveTab(t.id)} className="btn-press"
+            style={{flex:1,textAlign:"center",padding:"10px",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:600,
+              background:activeTab===t.id?"var(--surface)":"transparent",
+              color:activeTab===t.id?"var(--text)":"var(--text3)",
+              boxShadow:activeTab===t.id?"var(--shadow)":"none",transition:"all 0.2s"}}>{t.l}</div>
+        ))}
+      </div>
+
+      {/* Trade Panel */}
+      {activeTab==="trade" && (
+        <div style={{background:"var(--surface)",borderRadius:20,padding:20,border:"1px solid var(--border-s)",boxShadow:"var(--shadow)"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+            <div onClick={()=>setSide("yes")} className="btn-press"
+              style={{padding:14,borderRadius:12,cursor:"pointer",textAlign:"center",
+                background:side==="yes"?"var(--green-bg)":"var(--bg)",
+                border:side==="yes"?"2px solid var(--green)":"2px solid var(--border)",transition:"all 0.2s"}}>
+              <div style={{fontSize:12,color:side==="yes"?"var(--green)":"var(--text3)",fontWeight:600}}>看涨 YES</div>
+              <div style={{fontSize:24,fontWeight:900,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.yesPrice*100).toFixed(0)}¢</div>
+            </div>
+            <div onClick={()=>setSide("no")} className="btn-press"
+              style={{padding:14,borderRadius:12,cursor:"pointer",textAlign:"center",
+                background:side==="no"?"var(--red-bg)":"var(--bg)",
+                border:side==="no"?"2px solid var(--red)":"2px solid var(--border)",transition:"all 0.2s"}}>
+              <div style={{fontSize:12,color:side==="no"?"var(--red)":"var(--text3)",fontWeight:600}}>看跌 NO</div>
+              <div style={{fontSize:24,fontWeight:900,color:"var(--red)",fontFamily:"var(--mono)"}}>{(market.noPrice*100).toFixed(0)}¢</div>
+            </div>
+          </div>
+          <div style={{marginBottom:12}}>
+            <div style={{fontSize:11,color:"var(--text3)",marginBottom:6,fontWeight:600}}>投入金额 (USDT)</div>
+            <div style={{display:"flex",alignItems:"center",background:"var(--bg)",borderRadius:12,border:"1px solid var(--border-s)",padding:"0 14px"}}>
+              <span style={{color:"var(--text3)",fontSize:18,fontWeight:700}}>$</span>
+              <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.00"
+                style={{flex:1,background:"transparent",border:"none",outline:"none",color:"var(--text)",
+                  fontSize:24,fontWeight:700,padding:"14px 8px",fontFamily:"var(--mono)"}} />
+            </div>
+            <div style={{display:"flex",gap:6,marginTop:8}}>
+              {[10,50,100,500,1000].map(v=>(
+                <div key={v} onClick={()=>setAmount(v+"")} className="btn-press"
+                  style={{flex:1,textAlign:"center",padding:"8px 2px",borderRadius:8,background:amount===v+""?"var(--accent-bg)":"var(--bg)",
+                    border:amount===v+""?"1px solid var(--accent-bd)":"1px solid var(--border)",
+                    color:amount===v+""?"var(--accent)":"var(--text2)",fontSize:11,fontWeight:600,cursor:"pointer"}}>${v}</div>
+              ))}
+            </div>
+          </div>
+          {amount && parseFloat(amount)>0 && (
+            <div style={{background:"var(--bg)",borderRadius:10,padding:12,marginBottom:16,border:"1px solid var(--border)"}}>
+              {[{l:"获得份额",v:`${shares} 份`,c:"var(--text)"},{l:"潜在收益",v:`+$${profit.toFixed(2)}`,c:"var(--green)"},{l:"回报率",v:`${((profit/parseFloat(amount))*100).toFixed(0)}%`,c:"var(--green)"}].map((r,i)=>(
+                <div key={r.l} style={{display:"flex",justifyContent:"space-between",marginBottom:i<2?6:0}}>
+                  <span style={{fontSize:12,color:"var(--text3)"}}>{r.l}</span>
+                  <span style={{fontSize:12,color:r.c,fontWeight:700,fontFamily:"var(--mono)"}}>{r.v}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <div onClick={()=>{if(amount&&parseFloat(amount)>0)setShowConfirm(true);}} className="btn-press"
+            style={{padding:16,borderRadius:14,textAlign:"center",fontWeight:800,fontSize:16,letterSpacing:1,
+              cursor:amount&&parseFloat(amount)>0?"pointer":"default",color:"#fff",
+              background:!amount||parseFloat(amount)<=0?"#C8CBD8":side==="yes"?"linear-gradient(135deg,#00A878,#00C896)":"linear-gradient(135deg,#D42E47,#E5384F)",
+              opacity:amount&&parseFloat(amount)>0?1:0.6,transition:"all 0.2s",
+              boxShadow:amount&&parseFloat(amount)>0?(side==="yes"?"0 6px 20px rgba(0,168,120,0.3)":"0 6px 20px rgba(229,56,79,0.3)"):"none"}}>
+            {side==="yes"?"🟢 买入看涨":"🔴 买入看跌"}
+          </div>
+        </div>
+      )}
+
+      {/* Orderbook */}
+      {activeTab==="orderbook" && (
+        <div style={{background:"var(--surface)",borderRadius:16,padding:16,border:"1px solid var(--border)"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16}}>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:"var(--green)",marginBottom:8,textAlign:"center"}}>买盘 (Bids)</div>
+              {orderbook.bids.map((o,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--border)",position:"relative"}}>
+                  <div style={{position:"absolute",right:0,top:0,bottom:0,width:`${(o.q/5100)*100}%`,background:"var(--green-bg)",borderRadius:4}} />
+                  <span style={{fontSize:12,fontWeight:600,color:"var(--green)",fontFamily:"var(--mono)",position:"relative"}}>{(o.p*100).toFixed(0)}¢</span>
+                  <span style={{fontSize:12,color:"var(--text2)",fontFamily:"var(--mono)",position:"relative"}}>{fmt(o.q)}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:700,color:"var(--red)",marginBottom:8,textAlign:"center"}}>卖盘 (Asks)</div>
+              {orderbook.asks.map((o,i)=>(
+                <div key={i} style={{display:"flex",justifyContent:"space-between",padding:"6px 0",borderBottom:"1px solid var(--border)",position:"relative"}}>
+                  <div style={{position:"absolute",left:0,top:0,bottom:0,width:`${(o.q/4200)*100}%`,background:"var(--red-bg)",borderRadius:4}} />
+                  <span style={{fontSize:12,fontWeight:600,color:"var(--red)",fontFamily:"var(--mono)",position:"relative"}}>{(o.p*100).toFixed(0)}¢</span>
+                  <span style={{fontSize:12,color:"var(--text2)",fontFamily:"var(--mono)",position:"relative"}}>{fmt(o.q)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{textAlign:"center",marginTop:12,fontSize:11,color:"var(--text3)"}}>
+            价差: {((orderbook.asks[0].p - orderbook.bids[0].p)*100).toFixed(0)}¢ · 深度模拟数据
+          </div>
+        </div>
+      )}
+
+      {/* Activity */}
+      {activeTab==="activity" && (
+        <div style={{background:"var(--surface)",borderRadius:16,padding:16,border:"1px solid var(--border)"}}>
+          {ACTIVITY_FEED.map((a,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<ACTIVITY_FEED.length-1?"1px solid var(--border)":"none"}}>
+              <div style={{width:32,height:32,borderRadius:8,background:"var(--accent-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>
+                {a.action.includes("涨")?"🟢":"🔴"}
+              </div>
+              <div style={{flex:1}}>
+                <div style={{fontSize:13,color:"var(--text)"}}><b>{a.user}</b> {a.action}</div>
+                <div style={{fontSize:11,color:"var(--text3)"}}>{a.market} · ${a.amount}</div>
+              </div>
+              <div style={{fontSize:11,color:"var(--text3)"}}>{a.time}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Confirm Modal */}
+      {showConfirm && (
+        <div style={{position:"fixed",top:0,left:0,right:0,bottom:0,background:"rgba(0,0,0,0.35)",
+          display:"flex",alignItems:"flex-end",justifyContent:"center",zIndex:1000,backdropFilter:"blur(6px)"}}
+          onClick={()=>setShowConfirm(false)}>
+          <div onClick={e=>e.stopPropagation()}
+            style={{background:"var(--surface)",borderRadius:"24px 24px 0 0",padding:"28px 24px 36px",
+              width:"100%",maxWidth:420,boxShadow:"0 -10px 40px rgba(0,0,0,0.12)",animation:"slideUp 0.3s ease-out"}}>
+            <div style={{width:40,height:4,borderRadius:2,background:"var(--border-s)",margin:"0 auto 20px"}} />
+            <div style={{textAlign:"center",marginBottom:20}}>
+              <div style={{fontSize:48,marginBottom:8}}>{side==="yes"?"📈":"📉"}</div>
+              <div style={{fontSize:18,fontWeight:800,color:"var(--text)"}}>确认下注</div>
+            </div>
+            <div style={{background:"var(--bg)",borderRadius:12,padding:14,marginBottom:20}}>
+              <div style={{fontSize:13,color:"var(--text2)",marginBottom:10,lineHeight:1.5}}>{market.title}</div>
+              {[{l:"方向",v:side==="yes"?"看涨 YES":"看跌 NO",c:side==="yes"?"var(--green)":"var(--red)"},
+                {l:"价格",v:`${(price*100).toFixed(0)}¢`,c:"var(--text)"},
+                {l:"金额",v:`$${amount}`,c:"var(--text)"},
+                {l:"份额",v:`${shares} 份`,c:"var(--text)"},
+                {l:"潜在收益",v:`+$${profit.toFixed(2)} (${((profit/parseFloat(amount))*100).toFixed(0)}%)`,c:"var(--green)"},
+              ].map(r=>(
+                <div key={r.l} style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:13,color:"var(--text3)"}}>{r.l}</span>
+                  <span style={{fontSize:13,fontWeight:700,color:r.c,fontFamily:"var(--mono)"}}>{r.v}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:10}}>
+              <div onClick={()=>setShowConfirm(false)} className="btn-press"
+                style={{padding:16,borderRadius:14,textAlign:"center",cursor:"pointer",
+                  background:"var(--bg)",color:"var(--text2)",fontWeight:700,fontSize:15,border:"1px solid var(--border)"}}>取消</div>
+              <div onClick={confirmTrade} className="btn-press"
+                style={{padding:16,borderRadius:14,textAlign:"center",cursor:"pointer",
+                  background:side==="yes"?"linear-gradient(135deg,#00A878,#00C896)":"linear-gradient(135deg,#D42E47,#E5384F)",
+                  color:"#fff",fontWeight:800,fontSize:15,
+                  boxShadow:side==="yes"?"0 6px 20px rgba(0,168,120,0.3)":"0 6px 20px rgba(229,56,79,0.3)"}}>
+                确认下注 · ${amount}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════ PORTFOLIO ═══════════════ */
+function Portfolio({markets, positions, balance, onSell, onToast}) {
+  const totalValue = positions.reduce((a,p)=>{
+    const m=markets.find(x=>x.id===p.marketId);
+    return a + p.shares * (m ? m[p.side==="yes"?"yesPrice":"noPrice"] : 0);
+  },0);
+  const totalCost = positions.reduce((a,p)=>a+p.shares*p.avgPrice,0);
+  const pnl = totalValue-totalCost;
+  const wins = positions.filter(p=>{const m=markets.find(x=>x.id===p.marketId); return m&&(m[p.side==="yes"?"yesPrice":"noPrice"]-p.avgPrice)>=0;}).length;
+  const winRate = positions.length>0 ? (wins/positions.length*100).toFixed(0) : 0;
+
+  return (
+    <div style={{paddingBottom:80}} className="fade-up">
+      {/* Balance */}
+      <div style={{background:"linear-gradient(135deg,#3366FF,#1A4FE0,#2855D9)",borderRadius:20,padding:24,marginBottom:14,
+        position:"relative",overflow:"hidden",boxShadow:"0 8px 32px rgba(51,102,255,0.2)"}}>
+        <div style={{position:"absolute",top:-30,right:-30,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.08)"}} />
+        <div style={{position:"absolute",bottom:-20,left:-20,width:70,height:70,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}} />
+        <div style={{fontSize:12,color:"rgba(255,255,255,0.6)",marginBottom:4,fontWeight:600}}>账户总资产</div>
+        <div style={{fontSize:38,fontWeight:900,color:"#fff",fontFamily:"var(--mono)",marginBottom:4}}>${balance.toFixed(2)}</div>
+        <div style={{display:"flex",alignItems:"center",gap:8}}>
+          <span style={{fontSize:13,color:pnl>=0?"#86FFCE":"#FF9BAA",fontWeight:700,fontFamily:"var(--mono)"}}>
+            {pnl>=0?"+":""}${pnl.toFixed(2)}
+          </span>
+          <span style={{fontSize:11,color:"rgba(255,255,255,0.45)"}}>持仓盈亏</span>
+        </div>
+        <div style={{display:"flex",gap:10,marginTop:16}}>
+          <div className="btn-press" style={{flex:1,padding:10,borderRadius:10,textAlign:"center",background:"rgba(255,255,255,0.18)",color:"#fff",fontWeight:700,fontSize:13,cursor:"pointer"}}>💰 充值</div>
+          <div className="btn-press" style={{flex:1,padding:10,borderRadius:10,textAlign:"center",background:"rgba(255,255,255,0.08)",color:"rgba(255,255,255,0.8)",fontWeight:700,fontSize:13,cursor:"pointer"}}>💸 提现</div>
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
+        {[{l:"持仓数",v:positions.length,c:"var(--text)"},{l:"胜率",v:winRate+"%",c:"var(--green)"},{l:"总交易",v:positions.length+"",c:"var(--text)"}].map(s=>(
+          <div key={s.l} style={{background:"var(--surface)",borderRadius:12,padding:12,textAlign:"center",border:"1px solid var(--border)",boxShadow:"var(--shadow)"}}>
+            <div style={{fontSize:10,color:"var(--text3)",marginBottom:3}}>{s.l}</div>
+            <div style={{fontSize:18,fontWeight:800,color:s.c,fontFamily:"var(--mono)"}}>{s.v}</div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{fontSize:15,fontWeight:800,color:"var(--text)",marginBottom:12}}>我的持仓</div>
+      {positions.length===0 && (
+        <div style={{textAlign:"center",padding:"40px 0",color:"var(--text3)"}}>
+          <div style={{fontSize:48,marginBottom:8}}>📭</div>
+          <div style={{fontSize:14}}>暂无持仓，去竞猜市场下注吧！</div>
+        </div>
+      )}
+      {positions.map((pos,idx)=>{
+        const market=markets.find(m=>m.id===pos.marketId);
+        if(!market) return null;
+        const curPrice = market[pos.side==="yes"?"yesPrice":"noPrice"];
+        const pnl2=(curPrice-pos.avgPrice)*pos.shares;
+        const pnlPct=((curPrice-pos.avgPrice)/pos.avgPrice*100);
+        return (
+          <div key={idx} className="fade-up" style={{background:"var(--surface)",borderRadius:14,padding:16,marginBottom:8,
+            border:"1px solid var(--border)",boxShadow:"var(--shadow)",animationDelay:`${idx*60}ms`}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:10}}>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--text)",marginBottom:4}}>{market.emoji} {market.title}</div>
+                <div style={{display:"inline-block",padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,
+                  background:pos.side==="yes"?"var(--green-bg)":"var(--red-bg)",
+                  color:pos.side==="yes"?"var(--green)":"var(--red)"}}>
+                  {pos.side==="yes"?"看涨":"看跌"} · {pos.shares}份
+                </div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{fontSize:15,fontWeight:800,color:pnl2>=0?"var(--green)":"var(--red)",fontFamily:"var(--mono)"}}>
+                  {pnl2>=0?"+":""}${pnl2.toFixed(2)}
+                </div>
+                <div style={{fontSize:11,color:pnl2>=0?"var(--green)":"var(--red)",fontFamily:"var(--mono)"}}>
+                  {pnlPct>=0?"+":""}{pnlPct.toFixed(1)}%
+                </div>
+              </div>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+              <div style={{display:"flex",gap:12}}>
+                <span style={{fontSize:11,color:"var(--text3)"}}>均价 {(pos.avgPrice*100).toFixed(0)}¢</span>
+                <span style={{fontSize:11,color:"var(--text3)"}}>现价 {(curPrice*100).toFixed(0)}¢</span>
+              </div>
+              <div onClick={()=>{onSell(idx); onToast("✅ 已卖出持仓");}} className="btn-press"
+                style={{padding:"5px 12px",borderRadius:8,fontSize:11,fontWeight:600,cursor:"pointer",
+                  background:"var(--red-bg)",color:"var(--red)",border:"1px solid var(--red-bd)"}}>卖出</div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ═══════════════ LEADERBOARD ═══════════════ */
+function LeaderboardView() {
+  const [period, setPeriod] = useState(1);
+  return (
+    <div style={{paddingBottom:80}} className="fade-up">
+      <div style={{textAlign:"center",padding:"16px 0 12px"}}>
+        <div style={{fontSize:20,fontWeight:900,color:"var(--text)"}}>🏆 排行榜</div>
+        <div style={{fontSize:12,color:"var(--text3)",marginTop:4}}>竞猜高手收益排名</div>
+      </div>
+      <div style={{display:"flex",gap:4,marginBottom:16,background:"var(--bg)",borderRadius:10,padding:3}}>
+        {["日榜","月榜","总榜"].map((t,i)=>(
+          <div key={t} onClick={()=>setPeriod(i)} className="btn-press"
+            style={{flex:1,textAlign:"center",padding:"8px",borderRadius:8,cursor:"pointer",fontSize:13,fontWeight:600,
+              background:period===i?"var(--surface)":"transparent",color:period===i?"var(--text)":"var(--text3)",
+              boxShadow:period===i?"var(--shadow)":"none",transition:"all 0.2s"}}>{t}</div>
+        ))}
+      </div>
+      {/* Top 3 */}
+      <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:10,marginBottom:24}}>
+        {[LEADERBOARD[1],LEADERBOARD[0],LEADERBOARD[2]].map((p,i)=>{
+          const sz=[{h:80,s:44},{h:105,s:52},{h:70,s:40}];
+          const bg=["linear-gradient(180deg,#E8E8EC,#F5F5F8)","linear-gradient(180deg,#FFF8DC,#FFFDF5)","linear-gradient(180deg,#F0E0D0,#FBF5EF)"];
+          const bd=["#C0C0C044","#FFD70044","#CD7F3244"];
+          const lb=["🥈","🥇","🥉"];
+          return (
+            <div key={p.rank} style={{textAlign:"center"}} className="fade-up" >
+              <div style={{fontSize:sz[i].s,marginBottom:4}}>{p.avatar}</div>
+              <div style={{width:80,height:sz[i].h,background:bg[i],borderRadius:"14px 14px 0 0",
+                display:"flex",flexDirection:"column",justifyContent:"flex-start",alignItems:"center",
+                paddingTop:8,border:`1px solid ${bd[i]}`,borderBottom:"none"}}>
+                <div style={{fontSize:22}}>{lb[i]}</div>
+                <div style={{fontSize:11,fontWeight:800,color:"var(--text)",marginTop:4}}>{p.name}</div>
+                <div style={{fontSize:10,color:"var(--green)",fontWeight:700,fontFamily:"var(--mono)",marginTop:2}}>+¥{fmt(p.profit)}</div>
+                <div style={{fontSize:9,color:"var(--text3)",marginTop:1}}>胜率{(p.winRate*100).toFixed(0)}%</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+      {LEADERBOARD.slice(3).map((p,i)=>(
+        <div key={p.rank} className="fade-up"
+          style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",background:"var(--surface)",
+            borderRadius:12,marginBottom:6,border:"1px solid var(--border)",boxShadow:"var(--shadow)",
+            animationDelay:`${i*50}ms`}}>
+          <div style={{width:24,textAlign:"center",fontSize:14,fontWeight:800,color:"var(--text3)",fontFamily:"var(--mono)"}}>{p.rank}</div>
+          <div style={{fontSize:28}}>{p.avatar}</div>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:700,color:"var(--text)"}}>{p.name}</div>
+            <div style={{fontSize:11,color:"var(--text3)"}}>胜率 {(p.winRate*100).toFixed(0)}% · {p.trades}笔</div>
+          </div>
+          <div style={{fontSize:14,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>+¥{fmt(p.profit)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ═══════════════ CREATE MARKET ═══════════════ */
+function CreateMarket({onCreateMarket, onToast}) {
+  const [title,setTitle]=useState("");
+  const [desc,setDesc]=useState("");
+  const [endDate,setEndDate]=useState("");
+  const [cat,setCat]=useState("科技");
+  const [liq,setLiq]=useState(500);
+
+  const emojis = {"加密货币":"₿","科技":"🤖","金融":"📈","体育":"⚽","政治":"🏛","娱乐":"🎬"};
+
+  const handleCreate = () => {
+    if(!title||!desc||!endDate) { onToast("⚠️ 请填写完整信息"); return; }
+    onCreateMarket({
+      id: Date.now(), title, category: cat, emoji: emojis[cat]||"🎯",
+      yesPrice:0.50, noPrice:0.50, volume:liq, liquidity:liq, endDate,
+      trending:false, change24h:0, description:desc, comments:0, traders:1,
+      history:[0.50,0.50,0.50,0.50,0.50,0.50,0.50,0.50,0.50,0.50],
+    });
+    onToast("🎉 竞猜市场创建成功！");
+    setTitle(""); setDesc(""); setEndDate("");
+  };
+
+  return (
+    <div style={{paddingBottom:80}} className="fade-up">
+      <div style={{fontSize:20,fontWeight:900,color:"var(--text)",marginBottom:4,paddingTop:8}}>🎯 创建竞猜</div>
+      <div style={{fontSize:12,color:"var(--text3)",marginBottom:20}}>发起一个新的预测市场，邀请大家参与</div>
+      <div style={{display:"flex",flexDirection:"column",gap:14}}>
+        <div>
+          <div style={{fontSize:12,color:"var(--text2)",fontWeight:600,marginBottom:6}}>竞猜标题 *</div>
+          <input value={title} onChange={e=>setTitle(e.target.value)} placeholder="例：ETH 2026年Q3前突破 $10,000？"
+            style={{width:"100%",background:"var(--surface)",border:"1px solid var(--border-s)",borderRadius:12,padding:"14px 16px",color:"var(--text)",fontSize:14,outline:"none"}} />
+        </div>
+        <div>
+          <div style={{fontSize:12,color:"var(--text2)",fontWeight:600,marginBottom:6}}>详细描述 *</div>
+          <textarea value={desc} onChange={e=>setDesc(e.target.value)} rows={3} placeholder="明确结算条件和判定标准..."
+            style={{width:"100%",background:"var(--surface)",border:"1px solid var(--border-s)",borderRadius:12,padding:"14px 16px",color:"var(--text)",fontSize:14,outline:"none",resize:"none"}} />
+        </div>
+        <div>
+          <div style={{fontSize:12,color:"var(--text2)",fontWeight:600,marginBottom:6}}>分类</div>
+          <div style={{display:"flex",flexWrap:"wrap",gap:6}}>
+            {Object.keys(emojis).map(c=>(
+              <div key={c} onClick={()=>setCat(c)} className="btn-press"
+                style={{padding:"8px 14px",borderRadius:10,cursor:"pointer",fontSize:13,fontWeight:600,
+                  background:cat===c?"var(--accent-bg)":"var(--surface)",
+                  border:cat===c?`1px solid var(--accent)`:`1px solid var(--border)`,
+                  color:cat===c?"var(--accent)":"var(--text3)",transition:"all 0.2s"}}>{emojis[c]} {c}</div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div style={{fontSize:12,color:"var(--text2)",fontWeight:600,marginBottom:6}}>结算日期 *</div>
+          <input type="date" value={endDate} onChange={e=>setEndDate(e.target.value)}
+            style={{width:"100%",background:"var(--surface)",border:"1px solid var(--border-s)",borderRadius:12,padding:"14px 16px",color:"var(--text)",fontSize:14,outline:"none"}} />
+        </div>
+        <div>
+          <div style={{fontSize:12,color:"var(--text2)",fontWeight:600,marginBottom:6}}>初始流动性 (USDT)</div>
+          <div style={{display:"flex",gap:6}}>
+            {[100,500,1000,5000].map(v=>(
+              <div key={v} onClick={()=>setLiq(v)} className="btn-press"
+                style={{flex:1,padding:12,borderRadius:10,textAlign:"center",cursor:"pointer",
+                  background:liq===v?"var(--accent-bg)":"var(--surface)",
+                  border:liq===v?`1px solid var(--accent-bd)`:`1px solid var(--border)`,
+                  color:liq===v?"var(--accent)":"var(--text2)",fontSize:13,fontWeight:700,fontFamily:"var(--mono)"}}>${v}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* Preview */}
+        {title && (
+          <div style={{background:"var(--bg)",borderRadius:14,padding:14,border:"1px solid var(--border)"}}>
+            <div style={{fontSize:11,color:"var(--text3)",fontWeight:600,marginBottom:6}}>预览</div>
+            <div style={{display:"flex",gap:10,alignItems:"center"}}>
+              <div style={{fontSize:24,background:"var(--accent-bg)",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center"}}>{emojis[cat]||"🎯"}</div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:"var(--text)"}}>{title}</div>
+                <div style={{fontSize:11,color:"var(--text3)"}}>{cat} · 50/50 · {endDate||"待设置"}</div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div onClick={handleCreate} className="btn-press"
+          style={{padding:16,borderRadius:14,textAlign:"center",cursor:"pointer",
+            background:"linear-gradient(135deg,var(--accent),#1A4FE0)",
+            color:"#fff",fontWeight:800,fontSize:16,marginTop:4,letterSpacing:1,
+            boxShadow:"0 6px 24px rgba(51,102,255,0.25)"}}>
+          🚀 创建竞猜市场
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════ APP ═══════════════ */
+function App() {
+  const [tab, setTab] = useState("market");
+  const [selectedMarket, setSelectedMarket] = useState(null);
+  const [category, setCategory] = useState("全部");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [markets, setMarkets] = useState(INIT_MARKETS);
+  const [positions, setPositions] = useState(INIT_POSITIONS);
+  const [balance, setBalance] = useState(2486.50);
+  const [toast, setToast] = useState(null);
+
+  // Live price simulation
+  useEffect(()=>{
+    const iv = setInterval(()=>{
+      setMarkets(prev=>prev.map(m=>{
+        const delta = (Math.random()-0.5)*0.02;
+        let newYes = Math.max(0.02, Math.min(0.98, m.yesPrice + delta));
+        return {...m, yesPrice: Math.round(newYes*100)/100, noPrice: Math.round((1-newYes)*100)/100,
+          history: [...m.history.slice(1), newYes],
+          volume: m.volume + Math.floor(Math.random()*5000),
+          traders: m.traders + Math.floor(Math.random()*3)};
+      }));
+    }, 3000);
+    return ()=>clearInterval(iv);
+  },[]);
+
+  const handleTrade = (marketId, side, shares, price, cost) => {
+    setBalance(b=>b-cost);
+    setPositions(prev=>{
+      const existing = prev.findIndex(p=>p.marketId===marketId && p.side===side);
+      if(existing>=0) {
+        const p=prev[existing];
+        const totalShares = p.shares+shares;
+        const newAvg = (p.avgPrice*p.shares + price*shares)/totalShares;
+        const updated=[...prev];
+        updated[existing]={...p,shares:totalShares,avgPrice:newAvg};
+        return updated;
+      }
+      return [...prev,{marketId,side,shares,avgPrice:price}];
+    });
+  };
+
+  const handleSell = (idx) => {
+    const pos = positions[idx];
+    const m = markets.find(x=>x.id===pos.marketId);
+    if(!m) return;
+    const curPrice = m[pos.side==="yes"?"yesPrice":"noPrice"];
+    setBalance(b=>b+pos.shares*curPrice);
+    setPositions(prev=>prev.filter((_,i)=>i!==idx));
+  };
+
+  const handleCreateMarket = (newMarket) => {
+    setMarkets(prev=>[newMarket,...prev]);
+    setTab("market");
+  };
+
+  const filtered = markets.filter(m=>{
+    const mc = category==="全部"||(category==="🔥 热门"?m.trending:m.category===category);
+    const ms = !searchQuery||m.title.toLowerCase().includes(searchQuery.toLowerCase());
+    return mc&&ms;
+  });
+
+  const tabs = [{id:"market",l:"竞猜",icon:"🔮"},{id:"portfolio",l:"持仓",icon:"💼"},{id:"rank",l:"排行",icon:"🏆"},{id:"create",l:"发起",icon:"➕"}];
+
+  // Update selectedMarket with live data
+  const liveMarket = selectedMarket ? markets.find(m=>m.id===selectedMarket.id) : null;
+
+  return (
+    <React.Fragment>
+      {toast && <Toast msg={toast} onDone={()=>setToast(null)} />}
+
+      {/* Header */}
+      <div style={{padding:"12px 16px",background:"rgba(245,246,250,0.92)",backdropFilter:"blur(20px)",
+        borderBottom:"1px solid var(--border)",position:"sticky",top:0,zIndex:100,
+        display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+        <div style={{display:"flex",alignItems:"center",gap:10}}>
+          <div style={{width:34,height:34,borderRadius:10,background:"linear-gradient(135deg,var(--accent),#1A4FE0)",
+            display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:900,color:"#fff"}}>竞</div>
+          <div>
+            <div style={{fontSize:15,fontWeight:800,color:"var(--text)",letterSpacing:0.5}}>竞猜大师</div>
+            <div style={{fontSize:10,color:"var(--text3)"}}>Prediction Market · Beta</div>
+          </div>
+        </div>
+        <div style={{background:"var(--green-bg)",borderRadius:10,padding:"6px 12px",display:"flex",alignItems:"center",gap:4,border:"1px solid var(--green-bd)"}}>
+          <div style={{width:6,height:6,borderRadius:"50%",background:"var(--green)"}} />
+          <span style={{fontSize:12,fontWeight:700,color:"var(--green)",fontFamily:"var(--mono)"}}>${balance.toFixed(0)}</span>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div style={{padding:"0 16px",paddingTop:12}}>
+        {tab==="market"&&!liveMarket&&(
+          <React.Fragment>
+            <div style={{background:"var(--surface)",borderRadius:12,padding:"10px 14px",marginBottom:12,
+              display:"flex",alignItems:"center",gap:8,border:"1px solid var(--border)",boxShadow:"var(--shadow)"}}>
+              <span style={{fontSize:16,opacity:0.4}}>🔍</span>
+              <input value={searchQuery} onChange={e=>setSearchQuery(e.target.value)}
+                placeholder="搜索竞猜市场..."
+                style={{flex:1,background:"transparent",border:"none",outline:"none",color:"var(--text)",fontSize:14}} />
+              {searchQuery && <span onClick={()=>setSearchQuery("")} style={{cursor:"pointer",color:"var(--text3)",fontSize:16}}>✕</span>}
+            </div>
+            <div style={{display:"flex",gap:6,marginBottom:14,overflowX:"auto",paddingBottom:4}}>
+              {CATEGORIES.map(c=>(
+                <div key={c} onClick={()=>setCategory(c)} className="btn-press"
+                  style={{padding:"6px 14px",borderRadius:10,whiteSpace:"nowrap",
+                    background:category===c?"var(--accent-bg)":"var(--surface)",
+                    border:category===c?"1px solid var(--accent-bd)":"1px solid var(--border)",
+                    color:category===c?"var(--accent)":"var(--text3)",
+                    fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.2s"}}>{c}</div>
+              ))}
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <span style={{fontSize:11,color:"var(--text3)"}}>共 {filtered.length} 个竞猜市场</span>
+              <span style={{fontSize:11,color:"var(--green)",fontWeight:600}}>● 实时更新中</span>
+            </div>
+            <div style={{display:"flex",flexDirection:"column",gap:10,paddingBottom:80}}>
+              {filtered.map((m,i)=>(
+                <MarketCard key={m.id} market={m} onClick={()=>setSelectedMarket(m)} delay={i*50} />
+              ))}
+              {filtered.length===0 && (
+                <div style={{textAlign:"center",padding:"40px 0",color:"var(--text3)"}}>
+                  <div style={{fontSize:48,marginBottom:8}}>🔍</div>
+                  <div style={{fontSize:14}}>未找到相关市场</div>
+                </div>
+              )}
+            </div>
+          </React.Fragment>
+        )}
+        {tab==="market"&&liveMarket&&(
+          <MarketDetail market={liveMarket} positions={positions}
+            onBack={()=>setSelectedMarket(null)} onTrade={handleTrade} onToast={setToast} />
+        )}
+        {tab==="portfolio"&&<Portfolio markets={markets} positions={positions} balance={balance} onSell={handleSell} onToast={setToast} />}
+        {tab==="rank"&&<LeaderboardView />}
+        {tab==="create"&&<CreateMarket onCreateMarket={handleCreateMarket} onToast={setToast} />}
+      </div>
+
+      {/* Bottom Nav */}
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,
+        background:"rgba(245,246,250,0.92)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--border)",
+        padding:"8px 0 14px",display:"flex",justifyContent:"space-around",zIndex:100}}>
+        {tabs.map(t=>(
+          <div key={t.id} onClick={()=>{setTab(t.id);setSelectedMarket(null);}} className="btn-press"
+            style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2,
+              cursor:"pointer",padding:"4px 16px",borderRadius:12,transition:"all 0.2s"}}>
+            <span style={{fontSize:22,filter:tab===t.id?"none":"grayscale(0.6) opacity(0.45)",transition:"all 0.2s"}}>{t.icon}</span>
+            <span style={{fontSize:10,fontWeight:700,color:tab===t.id?"var(--accent)":"var(--text3)"}}>{t.l}</span>
+            {tab===t.id&&<div style={{width:16,height:2.5,borderRadius:2,background:"var(--accent)",marginTop:1}} />}
+            {t.id==="portfolio"&&positions.length>0&&(
+              <div style={{position:"absolute",top:2,right:8,width:16,height:16,borderRadius:"50%",
+                background:"var(--red)",fontSize:9,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700}}>
+                {positions.length}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </React.Fragment>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
