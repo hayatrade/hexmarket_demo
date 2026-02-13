@@ -2,8 +2,9 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 <title>HexMarket - 预测市场</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 <style>
@@ -19,11 +20,12 @@
     --sans: 'Noto Sans SC', 'PingFang SC', -apple-system, sans-serif;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { background: var(--bg); font-family: var(--sans); color: var(--text); overflow-x: hidden; }
+  body { background: var(--bg); font-family: var(--sans); color: var(--text); overflow-x: hidden;
+    padding-top: env(safe-area-inset-top, 0); }
   ::-webkit-scrollbar { display: none; }
   input, textarea { font-family: var(--sans); }
   input::placeholder, textarea::placeholder { color: #B8BCCE; }
-  #root { max-width: 420px; margin: 0 auto; min-height: 100vh; position: relative; }
+  #root { max-width: 420px; margin: 0 auto; min-height: 100vh; min-height: 100dvh; position: relative; }
 
   /* Animations */
   @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
@@ -43,25 +45,40 @@
   .toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 2000;
     background: var(--text); color: #fff; padding: 12px 24px; border-radius: 12px;
     font-size: 14px; font-weight: 600; animation: fadeUp 0.3s ease-out; box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .tg-bottom-nav { padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px)) !important; }
+  .tg-top-header { padding-top: calc(12px + var(--tg-safe-top, 0px)); }
 </style>
 </head>
 <body>
+<script>
+  // Telegram Mini App initialization
+  (function() {
+    var tg = window.Telegram && window.Telegram.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      // Request fullscreen (Bot API 8.0+)
+      if (tg.requestFullscreen) {
+        try { tg.requestFullscreen(); } catch(e) {}
+      }
+      if (tg.disableVerticalSwipes) {
+        tg.disableVerticalSwipes();
+      }
+      if (tg.setHeaderColor) {
+        tg.setHeaderColor('#F5F6FA');
+      }
+      if (tg.setBackgroundColor) {
+        tg.setBackgroundColor('#F5F6FA');
+      }
+      // Expose for React
+      window.__TG__ = tg;
+    }
+  })();
+</script>
 <div id="root"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<script type="text/javascript">
-const tg = window.Telegram.WebApp;
-// 2. 初始化应用
-tg.ready();
-// 3. 强制展开至全屏高度
-if (!tg.isExpanded) {
-    tg.expand();
-}
-// 可选：锁定垂直方向滑动（防止用户下拉关闭应用，增加原生感）
-tg.disableVerticalSwiping();
-</script>
 <script type="text/babel">
 const { useState, useEffect, useRef, useCallback } = React;
 
@@ -721,6 +738,20 @@ function App() {
     return ()=>clearInterval(iv);
   },[]);
 
+  // Telegram BackButton integration
+  useEffect(()=>{
+    const tg = window.__TG__;
+    if (!tg || !tg.BackButton) return;
+    if (selectedMarket) {
+      tg.BackButton.show();
+      const handler = ()=> setSelectedMarket(null);
+      tg.BackButton.onClick(handler);
+      return ()=> { tg.BackButton.offClick(handler); tg.BackButton.hide(); };
+    } else {
+      tg.BackButton.hide();
+    }
+  },[selectedMarket]);
+
   const handleTrade = (marketId, side, shares, price, cost) => {
     setBalance(b=>b-cost);
     setPositions(prev=>{
@@ -833,7 +864,7 @@ function App() {
       </div>
 
       {/* Bottom Nav */}
-      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,
+      <div className="tg-bottom-nav" style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:420,
         background:"rgba(245,246,250,0.92)",backdropFilter:"blur(20px)",borderTop:"1px solid var(--border)",
         padding:"8px 0 14px",display:"flex",justifyContent:"space-around",zIndex:100}}>
         {tabs.map(t=>(
