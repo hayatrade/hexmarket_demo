@@ -80,26 +80,26 @@ const { useState, useEffect, useRef, useCallback } = React;
 
 /* ═══════════════ DATA ═══════════════ */
 const INIT_MARKETS = [
-  { id:1, title:"BTC 2026年最高价能到多少？", category:"加密货币", emoji:"₿", yesPrice:0.86, noPrice:0.14, volume:17000000, liquidity:1000000, endDate:"2027-01-01", trending:true, change24h:0.02, description:"比特币(BTC/USDT)2026年价格区间预测。↑$75K概率86%，↑$100K概率82%，↑$150K概率11%，↓$65K概率66%，↓$55K概率42%。数据源：Binance。华人crypto圈年度信仰盘。", comments:1205, traders:24510, history:[0.82,0.83,0.85,0.84,0.86,0.85,0.87,0.86,0.85,0.86], polymarket:"https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027" },
-  { id:2, title:"以太坊2026年价格区间预测", category:"加密货币", emoji:"⟠", yesPrice:0.65, noPrice:0.35, volume:20000000, liquidity:800000, endDate:"2027-01-01", trending:false, change24h:0.01, description:"以太坊(ETH/USDT)在2026年全年最高价格区间是多少？ETH 2.0升级后长期叙事，矿工/持有者最关心。", comments:567, traders:12340, history:[0.58,0.60,0.62,0.64,0.63,0.65,0.66,0.64,0.63,0.65], polymarket:"https://polymarket.com/event/what-price-will-ethereum-hit-in-2026" },
-  { id:3, title:"2026 NBA总冠军花落谁家？", category:"体育", emoji:"🏀", yesPrice:0.47, noPrice:0.53, volume:83450000, liquidity:5200000, endDate:"2026-07-01", trending:true, change24h:0.03, description:"2026年NBA总冠军预测。当前赔率：雷霆47%、掘金10%、火箭7%、尼克斯6%、骑士4.4%、马刺3.9%。总交易量超$8300万。", comments:68, traders:45120, history:[0.36,0.38,0.40,0.42,0.44,0.43,0.45,0.46,0.47,0.47], polymarket:"https://polymarket.com/event/2026-nba-champion" },
-  { id:4, title:"2026世界杯冠军是哪支球队？", category:"体育", emoji:"⚽", yesPrice:0.16, noPrice:0.84, volume:13358000, liquidity:3500000, endDate:"2026-07-20", trending:true, change24h:0.01, description:"2026年FIFA世界杯冠军预测。西班牙16%、英格兰14%、法国14%、葡萄牙9%、阿根廷9%、巴西8%、德国7%。C罗/梅西退役后新王者谁属？", comments:342, traders:28930, history:[0.14,0.14,0.15,0.15,0.14,0.15,0.16,0.15,0.16,0.16], polymarket:"https://polymarket.com/event/2026-fifa-world-cup-winner-595" },
+  { id:1, title:"BTC 2026年最高价能到多少？", category:"加密货币", emoji:"₿", yesPrice:0.86, noPrice:0.14, volume:17000000, liquidity:1000000, endDate:"2027-01-01", trending:true, change24h:0.02, description:"比特币(BTC/USDT)2026年价格区间预测。数据源：Binance 1分钟K线。华人crypto圈年度信仰盘。", comments:1205, traders:24510, history:[0.82,0.83,0.85,0.84,0.86,0.85,0.87,0.86,0.85,0.86], polymarket:"https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027", outcomes:[{name:"↑ $200,000",price:0.15},{name:"↑ $150,000",price:0.27},{name:"↑ $130,000",price:0.43},{name:"↑ $120,000",price:0.55},{name:"↑ $110,000",price:0.69},{name:"↑ $100,000",price:0.82},{name:"↓ $75,000",price:0.78},{name:"↓ $65,000",price:0.66},{name:"↓ $55,000",price:0.42},{name:"↓ $45,000",price:0.30},{name:"↓ $35,000",price:0.15}] },
+  { id:2, title:"以太坊2026年价格区间预测", category:"加密货币", emoji:"⟠", yesPrice:0.65, noPrice:0.35, volume:20000000, liquidity:800000, endDate:"2027-01-01", trending:false, change24h:0.01, description:"以太坊(ETH/USDT)在2026年全年最高价格区间。ETH 2.0升级后长期叙事，矿工/持有者最关心。", comments:567, traders:12340, history:[0.58,0.60,0.62,0.64,0.63,0.65,0.66,0.64,0.63,0.65], polymarket:"https://polymarket.com/event/what-price-will-ethereum-hit-in-2026", outcomes:[{name:"↑ $10,000",price:0.08},{name:"↑ $6,000",price:0.22},{name:"↑ $5,000",price:0.35},{name:"↑ $4,000",price:0.52},{name:"↑ $3,500",price:0.65},{name:"↓ $2,000",price:0.55},{name:"↓ $1,500",price:0.32},{name:"↓ $1,000",price:0.15}] },
+  { id:3, title:"2026 NBA总冠军花落谁家？", category:"体育", emoji:"🏀", yesPrice:0.47, noPrice:0.53, volume:83450000, liquidity:5200000, endDate:"2026-07-01", trending:true, change24h:0.03, description:"2026年NBA总冠军预测。总交易量超$8300万。", comments:68, traders:45120, history:[0.36,0.38,0.40,0.42,0.44,0.43,0.45,0.46,0.47,0.47], polymarket:"https://polymarket.com/event/2026-nba-champion", outcomes:[{name:"雷霆 Thunder",price:0.47},{name:"掘金 Nuggets",price:0.10},{name:"火箭 Rockets",price:0.07},{name:"尼克斯 Knicks",price:0.06},{name:"骑士 Cavaliers",price:0.044},{name:"马刺 Spurs",price:0.039},{name:"活塞 Pistons",price:0.037},{name:"湖人 Lakers",price:0.037},{name:"凯尔特人 Celtics",price:0.033},{name:"勇士 Warriors",price:0.024}] },
+  { id:4, title:"2026世界杯冠军是哪支球队？", category:"体育", emoji:"⚽", yesPrice:0.16, noPrice:0.84, volume:13358000, liquidity:3500000, endDate:"2026-07-20", trending:true, change24h:0.01, description:"2026年FIFA世界杯冠军预测。C罗/梅西退役后新王者谁属？", comments:342, traders:28930, history:[0.14,0.14,0.15,0.15,0.14,0.15,0.16,0.15,0.16,0.16], polymarket:"https://polymarket.com/event/2026-fifa-world-cup-winner-595", outcomes:[{name:"🇪🇸 西班牙",price:0.16},{name:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 英格兰",price:0.14},{name:"🇫🇷 法国",price:0.14},{name:"🇵🇹 葡萄牙",price:0.09},{name:"🇦🇷 阿根廷",price:0.09},{name:"🇧🇷 巴西",price:0.08},{name:"🇩🇪 德国",price:0.07},{name:"🇳🇴 挪威",price:0.05},{name:"🇳🇱 荷兰",price:0.04},{name:"🇮🇹 意大利",price:0.026}] },
   { id:5, title:"美国2026年6月前打击伊朗？", category:"政治", emoji:"🌍", yesPrice:0.45, noPrice:0.55, volume:257000000, liquidity:12000000, endDate:"2026-06-30", trending:true, change24h:-0.02, description:"美国是否会在2026年6月30日之前对伊朗进行军事打击？中东局势影响油价和加密货币市场，总交易量$2.57亿。", comments:2341, traders:89230, history:[0.40,0.42,0.44,0.46,0.48,0.47,0.46,0.44,0.43,0.45], polymarket:"https://polymarket.com/event/us-strikes-iran-by-june-30-2026" },
-  { id:6, title:"2028民主党总统候选人是谁？", category:"政治", emoji:"🇺🇸", yesPrice:0.36, noPrice:0.64, volume:342857000, liquidity:18000000, endDate:"2028-11-07", trending:true, change24h:0.01, description:"2028年美国民主党总统候选人预测。纽森(Newsom)36%、AOC 12%、布蒂吉格6%、夏皮罗4.3%。特朗普后时代美国政治长线。总交易量超$3.4亿。", comments:678, traders:67800, history:[0.30,0.32,0.33,0.34,0.35,0.34,0.35,0.36,0.35,0.36], polymarket:"https://polymarket.com/event/democratic-presidential-nominee-2028" },
-  { id:7, title:"2026欧冠冠军花落谁家？", category:"体育", emoji:"🏆", yesPrice:0.19, noPrice:0.81, volume:147763000, liquidity:9500000, endDate:"2026-05-31", trending:true, change24h:0.02, description:"2025-26赛季欧冠冠军预测。阿森纳19%、拜仁17%、曼城12%、巴黎11%、巴萨10%、皇马9%、利物浦8%。总交易量$1.47亿。", comments:456, traders:35670, history:[0.16,0.17,0.18,0.18,0.19,0.18,0.19,0.19,0.18,0.19], polymarket:"https://polymarket.com/event/uefa-champions-league-winner" },
+  { id:6, title:"2028民主党总统候选人是谁？", category:"政治", emoji:"🇺🇸", yesPrice:0.36, noPrice:0.64, volume:342857000, liquidity:18000000, endDate:"2028-11-07", trending:true, change24h:0.01, description:"2028年美国民主党总统候选人预测。特朗普后时代美国政治长线。总交易量超$3.4亿。", comments:678, traders:67800, history:[0.30,0.32,0.33,0.34,0.35,0.34,0.35,0.36,0.35,0.36], polymarket:"https://polymarket.com/event/democratic-presidential-nominee-2028", outcomes:[{name:"纽森 Newsom",price:0.36},{name:"AOC 奥卡西奥",price:0.12},{name:"布蒂吉格 Buttigieg",price:0.06},{name:"夏皮罗 Shapiro",price:0.043},{name:"普利兹克 Pritzker",price:0.03},{name:"惠特默 Whitmer",price:0.025}] },
+  { id:7, title:"2026欧冠冠军花落谁家？", category:"体育", emoji:"🏆", yesPrice:0.19, noPrice:0.81, volume:147763000, liquidity:9500000, endDate:"2026-05-31", trending:true, change24h:0.02, description:"2025-26赛季欧冠冠军预测。总交易量$1.47亿。", comments:456, traders:35670, history:[0.16,0.17,0.18,0.18,0.19,0.18,0.19,0.19,0.18,0.19], polymarket:"https://polymarket.com/event/uefa-champions-league-winner", outcomes:[{name:"阿森纳 Arsenal",price:0.19},{name:"拜仁 Bayern",price:0.17},{name:"曼城 Man City",price:0.12},{name:"巴黎 PSG",price:0.11},{name:"巴萨 Barcelona",price:0.10},{name:"皇马 Real Madrid",price:0.09},{name:"利物浦 Liverpool",price:0.08},{name:"切尔西 Chelsea",price:0.04}] },
   { id:8, title:"中本聪2026年会转移比特币吗？", category:"加密货币", emoji:"🔮", yesPrice:0.07, noPrice:0.93, volume:481758, liquidity:156000, endDate:"2027-01-01", trending:false, change24h:0.00, description:"标记为中本聪(Satoshi Nakamoto)的钱包是否会在2026年出现转出或交换交易？数据源：Arkham Intel Explorer。比特币起源谜团，年年等'复活'。", comments:189, traders:5670, history:[0.12,0.11,0.10,0.09,0.08,0.08,0.07,0.08,0.07,0.07], polymarket:"https://polymarket.com/event/will-satoshi-move-any-bitcoin-in-2026" },
-  { id:9, title:"2026冬奥会金牌最多的国家？", category:"体育", emoji:"🥇", yesPrice:0.97, noPrice:0.03, volume:8000000, liquidity:620000, endDate:"2026-03-01", trending:false, change24h:0.00, description:"2026年米兰-科尔蒂纳冬奥会哪个国家获得最多金牌？挪威以97%的概率遥遥领先。关注中国代表团表现！", comments:156, traders:8920, history:[0.95,0.96,0.96,0.97,0.96,0.97,0.97,0.97,0.97,0.97], polymarket:"https://polymarket.com/event/2026-winter-olympics-most-gold-medals" },
-  { id:10, title:"2026全球票房冠军电影是哪部？", category:"娱乐", emoji:"🎬", yesPrice:0.37, noPrice:0.63, volume:1053000, liquidity:450000, endDate:"2026-12-31", trending:false, change24h:0.03, description:"2026年全球票房最高的电影是哪部？蜘蛛侠:Brand New Day 37%、超级马里奥银河 31%、复仇者联盟:末日 14%、玩具总动员5 4%。", comments:234, traders:12340, history:[0.25,0.27,0.28,0.30,0.32,0.33,0.34,0.35,0.36,0.37], polymarket:"https://polymarket.com/event/highest-grossing-movie-in-2026" },
-  { id:11, title:"2028共和党总统候选人是谁？", category:"政治", emoji:"🐘", yesPrice:0.35, noPrice:0.65, volume:200000000, liquidity:15000000, endDate:"2028-11-07", trending:false, change24h:0.01, description:"2028年美国共和党总统候选人预测。万斯(Vance)等热门人选角逐。后特朗普时代政治长线，影响中美关系走向。", comments:890, traders:56780, history:[0.30,0.31,0.32,0.33,0.34,0.33,0.34,0.35,0.34,0.35], polymarket:"https://polymarket.com/event/republican-presidential-nominee-2028" },
+  { id:9, title:"2026冬奥会金牌最多的国家？", category:"体育", emoji:"🥇", yesPrice:0.97, noPrice:0.03, volume:8000000, liquidity:620000, endDate:"2026-03-01", trending:false, change24h:0.00, description:"2026年米兰-科尔蒂纳冬奥会哪个国家获得最多金牌？", comments:156, traders:8920, history:[0.95,0.96,0.96,0.97,0.96,0.97,0.97,0.97,0.97,0.97], polymarket:"https://polymarket.com/event/2026-winter-olympics-most-gold-medals", outcomes:[{name:"🇳🇴 挪威",price:0.97},{name:"🇩🇪 德国",price:0.01},{name:"🇸🇪 瑞典",price:0.01},{name:"🇨🇳 中国",price:0.005}] },
+  { id:10, title:"2026全球票房冠军电影是哪部？", category:"娱乐", emoji:"🎬", yesPrice:0.37, noPrice:0.63, volume:1053000, liquidity:450000, endDate:"2026-12-31", trending:false, change24h:0.03, description:"2026年全球票房最高的电影是哪部？", comments:234, traders:12340, history:[0.25,0.27,0.28,0.30,0.32,0.33,0.34,0.35,0.36,0.37], polymarket:"https://polymarket.com/event/highest-grossing-movie-in-2026", outcomes:[{name:"蜘蛛侠:新日",price:0.37},{name:"超级马里奥银河",price:0.31},{name:"复仇者:末日",price:0.14},{name:"迈克尔 Michael",price:0.041},{name:"玩具总动员5",price:0.037},{name:"奥德赛 Odyssey",price:0.032},{name:"曼达洛人与格罗古",price:0.02}] },
+  { id:11, title:"2028共和党总统候选人是谁？", category:"政治", emoji:"🐘", yesPrice:0.35, noPrice:0.65, volume:200000000, liquidity:15000000, endDate:"2028-11-07", trending:false, change24h:0.01, description:"2028年美国共和党总统候选人预测。后特朗普时代政治长线，影响中美关系走向。", comments:890, traders:56780, history:[0.30,0.31,0.32,0.33,0.34,0.33,0.34,0.35,0.34,0.35], polymarket:"https://polymarket.com/event/republican-presidential-nominee-2028", outcomes:[{name:"万斯 Vance",price:0.35},{name:"德桑蒂斯 DeSantis",price:0.12},{name:"拉马斯瓦米 Vivek",price:0.08},{name:"海利 Haley",price:0.06},{name:"科顿 Cotton",price:0.04}] },
   { id:12, title:"美国2027年底前承认外星人存在？", category:"脑洞", emoji:"👽", yesPrice:0.08, noPrice:0.92, volume:1400000, liquidity:120000, endDate:"2027-12-31", trending:false, change24h:0.01, description:"美国政府是否会在2027年底前正式承认外星人或外星生命的存在？UFO听证会频繁召开，科幻迷必玩。", comments:567, traders:9870, history:[0.06,0.07,0.07,0.08,0.07,0.08,0.08,0.07,0.08,0.08], polymarket:"https://polymarket.com/event/us-admit-aliens-exist-by-end-of-2027" },
   { id:13, title:"爱泼斯坦2027年前被证实还活着？", category:"脑洞", emoji:"🕵️", yesPrice:0.05, noPrice:0.95, volume:748000, liquidity:85000, endDate:"2027-01-01", trending:false, change24h:0.00, description:"杰弗里·爱泼斯坦是否会在2027年之前被证实仍然在世？经典阴谋论，社区热议'假死'。", comments:345, traders:4560, history:[0.06,0.05,0.05,0.06,0.05,0.05,0.05,0.05,0.05,0.05], polymarket:"https://polymarket.com/event/jeffrey-epstein-confirmed-to-be-alive-before-2027" },
   { id:14, title:"2026年是否出现史上最热月份？", category:"脑洞", emoji:"🌡️", yesPrice:0.70, noPrice:0.30, volume:19000, liquidity:8000, endDate:"2027-01-01", trending:false, change24h:0.02, description:"2026年中是否有任何一个月成为有记录以来最热的月份？全球变暖趋势押注，气候议题持续升温。", comments:89, traders:1230, history:[0.62,0.64,0.65,0.67,0.68,0.69,0.68,0.69,0.70,0.70], polymarket:"https://polymarket.com/event/will-any-month-of-2026-be-the-hottest-on-record" },
   { id:15, title:"耶稣基督2027年前回归？", category:"脑洞", emoji:"✝️", yesPrice:0.04, noPrice:0.96, volume:4000000, liquidity:350000, endDate:"2027-01-01", trending:false, change24h:0.00, description:"耶稣基督是否会在2027年之前回归人间？宗教末日梗，跨文化娱乐，$400万交易量。", comments:1200, traders:23450, history:[0.05,0.04,0.04,0.05,0.04,0.04,0.04,0.04,0.04,0.04], polymarket:"https://polymarket.com/event/will-jesus-christ-return-before-2027" },
-  { id:16, title:"2026冬奥冰球金牌花落谁家？", category:"体育", emoji:"🏒", yesPrice:0.35, noPrice:0.65, volume:12000000, liquidity:980000, endDate:"2026-03-01", trending:false, change24h:0.01, description:"2026年米兰冬奥会冰球金牌预测。加拿大、美国热门争冠，冰球大国对决。", comments:123, traders:6780, history:[0.30,0.31,0.32,0.33,0.34,0.33,0.34,0.35,0.34,0.35], polymarket:"https://polymarket.com/event/2026-winter-olympics-ice-hockey-gold-medal-winner" },
+  { id:16, title:"2026冬奥冰球金牌花落谁家？", category:"体育", emoji:"🏒", yesPrice:0.35, noPrice:0.65, volume:12000000, liquidity:980000, endDate:"2026-03-01", trending:false, change24h:0.01, description:"2026年米兰冬奥会冰球金牌预测。冰球大国对决。", comments:123, traders:6780, history:[0.30,0.31,0.32,0.33,0.34,0.33,0.34,0.35,0.34,0.35], polymarket:"https://polymarket.com/event/2026-winter-olympics-ice-hockey-gold-medal-winner", outcomes:[{name:"🇨🇦 加拿大",price:0.35},{name:"🇺🇸 美国",price:0.22},{name:"🇸🇪 瑞典",price:0.12},{name:"🇫🇮 芬兰",price:0.10},{name:"🇷🇺 俄罗斯",price:0.08}] },
   { id:17, title:"2026美最高法院出现空缺？", category:"政治", emoji:"⚖️", yesPrice:0.44, noPrice:0.56, volume:3500000, liquidity:280000, endDate:"2027-01-01", trending:false, change24h:-0.01, description:"2026年美国最高法院是否会出现席位空缺？影响全球法律政策走向的长线预测。", comments:234, traders:8900, history:[0.40,0.42,0.43,0.44,0.45,0.44,0.43,0.44,0.43,0.44], polymarket:"https://polymarket.com/event/supreme-court-vacancy-in-2026" },
   { id:18, title:"2026：啥大事都没发生？", category:"脑洞", emoji:"🤷", yesPrice:0.12, noPrice:0.88, volume:2000000, liquidity:150000, endDate:"2027-01-01", trending:false, change24h:0.00, description:"Nothing Ever Happens: 2026。2026年是否会是'啥都没发生'的一年？Meme式年度总结，纯乐子长期盘。", comments:456, traders:5670, history:[0.15,0.14,0.13,0.13,0.12,0.13,0.12,0.12,0.12,0.12], polymarket:"https://polymarket.com/event/nothing-ever-happens-2026" },
   { id:19, title:"BTC 2026年底前能否突破$150K？", category:"加密货币", emoji:"🚀", yesPrice:0.11, noPrice:0.89, volume:8500000, liquidity:620000, endDate:"2026-12-31", trending:true, change24h:-0.01, description:"比特币是否会在2026年12月31日前达到$150,000？当前仅11%概率。Binance BTC/USDT为数据源。crypto长线经典。", comments:890, traders:18900, history:[0.15,0.14,0.13,0.12,0.13,0.12,0.11,0.12,0.11,0.11], polymarket:"https://polymarket.com/event/what-price-will-bitcoin-hit-before-2027" },
-  { id:20, title:"2026奥斯卡最佳影片花落谁家？", category:"娱乐", emoji:"🎭", yesPrice:0.25, noPrice:0.75, volume:15000000, liquidity:1200000, endDate:"2026-03-30", trending:false, change24h:0.02, description:"2026年第98届奥斯卡最佳影片预测。多部电影激烈竞争，奥斯卡季升温中。华人爱追好莱坞颁奖季。", comments:345, traders:9870, history:[0.20,0.21,0.22,0.23,0.22,0.24,0.23,0.24,0.25,0.25], polymarket:"https://polymarket.com/event/oscars-2026-best-picture" },
+  { id:20, title:"2026奥斯卡最佳影片花落谁家？", category:"娱乐", emoji:"🎭", yesPrice:0.25, noPrice:0.75, volume:15000000, liquidity:1200000, endDate:"2026-03-30", trending:false, change24h:0.02, description:"2026年第98届奥斯卡最佳影片预测。多部电影激烈竞争，奥斯卡季升温中。", comments:345, traders:9870, history:[0.20,0.21,0.22,0.23,0.22,0.24,0.23,0.24,0.25,0.25], polymarket:"https://polymarket.com/event/oscars-2026-best-picture", outcomes:[{name:"布鲁托",price:0.25},{name:"The Alto Knights",price:0.15},{name:"F1",price:0.12},{name:"The Battle of Baktan Cross",price:0.10},{name:"Bugonia",price:0.08}] },
 ];
 
 const INIT_POSITIONS = [
@@ -121,10 +121,10 @@ const LEADERBOARD = [
 
 const CATEGORIES = ["全部","🔥 热门","加密货币","体育","政治","娱乐","脑洞"];
 const ACTIVITY_FEED = [
-  { user:"量化之王", action:"买入看涨", market:"BTC突破$150K", amount:500, time:"2分钟前" },
-  { user:"DeFi大神", action:"买入看跌", market:"美国打击伊朗", amount:200, time:"5分钟前" },
-  { user:"预言家小明", action:"买入看涨", market:"NBA雷霆夺冠", amount:1000, time:"8分钟前" },
-  { user:"币圈老韭菜", action:"卖出看涨", market:"欧冠阿森纳", amount:300, time:"12分钟前" },
+  { user:"量化之王", action:"买入是", market:"BTC突破$150K", amount:500, time:"2分钟前" },
+  { user:"DeFi大神", action:"买入否", market:"美国打击伊朗", amount:200, time:"5分钟前" },
+  { user:"预言家小明", action:"买入是", market:"NBA雷霆夺冠", amount:1000, time:"8分钟前" },
+  { user:"币圈老韭菜", action:"卖出是", market:"欧冠阿森纳", amount:300, time:"12分钟前" },
 ];
 
 /* ═══════════════ UTILS ═══════════════ */
@@ -143,7 +143,17 @@ function MiniChart({ data, color, w=80, h=28 }) {
   );
 }
 
-function ProbBar({yes}) {
+function ProbBar({yes, outcomes}) {
+  if (outcomes && outcomes.length > 0) {
+    const colors = ["#00A878","#3B82F6","#F59E0B","#8B5CF6","#EC4899","#6B7280"];
+    return (
+      <div style={{display:"flex",borderRadius:99,overflow:"hidden",height:5,width:"100%",background:"var(--bg)"}}>
+        {outcomes.slice(0,6).map((o,i)=>(
+          <div key={i} style={{width:`${o.price*100}%`,background:colors[i%colors.length],transition:"width 0.6s ease"}} />
+        ))}
+      </div>
+    );
+  }
   return (
     <div style={{display:"flex",borderRadius:99,overflow:"hidden",height:5,width:"100%",background:"var(--red-bg)"}}>
       <div style={{width:`${yes*100}%`,background:"linear-gradient(90deg,var(--green),#00C896)",transition:"width 0.6s ease",borderRadius:99}} />
@@ -179,17 +189,26 @@ function MarketCard({market, onClick, delay=0}) {
             display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{market.title}</div>
         </div>
       </div>
-      <ProbBar yes={market.yesPrice} />
+      <ProbBar yes={market.yesPrice} outcomes={market.outcomes} />
+      {/* Multi-outcome: show top outcomes */}
+      {market.outcomes ? (
+        <div style={{marginTop:12}}>
+          {market.outcomes.slice(0,3).map((o,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:i<2?5:0}}>
+              <div style={{display:"flex",alignItems:"center",gap:6,flex:1,minWidth:0}}>
+                <div style={{width:4,height:14,borderRadius:2,background:`hsl(${210-i*40},70%,55%)`}} />
+                <span style={{fontSize:12,color:"var(--text)",fontWeight:600,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</span>
+              </div>
+              <span style={{fontSize:13,fontWeight:800,color:"var(--accent)",fontFamily:"var(--mono)",flexShrink:0}}>{(o.price*100).toFixed(0)}%</span>
+            </div>
+          ))}
+          {market.outcomes.length>3 && <div style={{fontSize:10,color:"var(--text3)",marginTop:4}}>+{market.outcomes.length-3} 个选项</div>}
+        </div>
+      ) : (
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginTop:12}}>
-        <div style={{display:"flex",gap:20}}>
-          <div>
-            <div style={{fontSize:10,color:"var(--text3)",marginBottom:1}}>看涨</div>
-            <div style={{fontSize:18,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.yesPrice*100).toFixed(0)}¢</div>
-          </div>
-          <div>
-            <div style={{fontSize:10,color:"var(--text3)",marginBottom:1}}>看跌</div>
-            <div style={{fontSize:18,fontWeight:800,color:"var(--red)",fontFamily:"var(--mono)"}}>{(market.noPrice*100).toFixed(0)}¢</div>
-          </div>
+        <div>
+          <div style={{fontSize:10,color:"var(--text3)",marginBottom:1}}>概率</div>
+          <div style={{fontSize:22,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.yesPrice*100).toFixed(0)}%</div>
         </div>
         <div style={{textAlign:"right",display:"flex",flexDirection:"column",alignItems:"flex-end",gap:3}}>
           <MiniChart data={market.history} color={pos?"var(--green)":"var(--red)"} />
@@ -198,8 +217,9 @@ function MarketCard({market, onClick, delay=0}) {
           </div>
         </div>
       </div>
+      )}
       <div style={{display:"flex",justifyContent:"space-between",marginTop:12,paddingTop:10,borderTop:"1px solid var(--border)"}}>
-        <span style={{fontSize:11,color:"var(--text3)"}}>📊 ¥{fmt(market.volume)}</span>
+        <span style={{fontSize:11,color:"var(--text3)"}}>📊 ${fmt(market.volume)}</span>
         <span style={{fontSize:11,color:"var(--text3)"}}>👥 {fmt(market.traders)}人</span>
         <span style={{fontSize:11,color:"var(--text3)"}}>⏰ {market.endDate}</span>
       </div>
@@ -214,17 +234,23 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
   const [showConfirm, setShowConfirm] = useState(false);
   const [chartRange, setChartRange] = useState(2);
   const [activeTab, setActiveTab] = useState("trade"); // trade | orderbook | activity
+  const [selectedOutcome, setSelectedOutcome] = useState(null); // for multi-outcome
+  const [showAllOutcomes, setShowAllOutcomes] = useState(false);
+  const isMulti = market.outcomes && market.outcomes.length > 0;
 
-  const price = side==="yes"? market.yesPrice : market.noPrice;
-  const shares = amount ? Math.floor(parseFloat(amount)/price) : 0;
+  const tradePrice = isMulti
+    ? (selectedOutcome !== null ? market.outcomes[selectedOutcome].price : 0)
+    : (side==="yes"? market.yesPrice : market.noPrice);
+  const shares = amount && tradePrice > 0 ? Math.floor(parseFloat(amount)/tradePrice) : 0;
   const profit = shares*1 - (parseFloat(amount)||0);
   const myPos = positions.filter(p=>p.marketId===market.id);
 
   const confirmTrade = () => {
-    onTrade(market.id, side, shares, price, parseFloat(amount));
+    const label = isMulti&&selectedOutcome!==null ? market.outcomes[selectedOutcome].name : (side==="yes"?"是":"否");
+    onTrade(market.id, side, shares, tradePrice, parseFloat(amount));
     setShowConfirm(false);
     setAmount("");
-    onToast(`✅ 成功买入 ${shares} 份${side==="yes"?"看涨":"看跌"}！`);
+    onToast(`✅ 成功买入 ${shares} 份 ${label}！`);
   };
 
   // Simulated orderbook data
@@ -250,7 +276,46 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
         </div>
       </div>
 
-      {/* Big price */}
+      {/* Multi-outcome: Outcomes list */}
+      {isMulti ? (
+        <div style={{padding:"14px 0"}}>
+          <div style={{fontSize:12,color:"var(--text3)",fontWeight:600,marginBottom:10}}>全部选项 · {market.outcomes.length}个结果</div>
+          {(showAllOutcomes ? market.outcomes : market.outcomes.slice(0,6)).map((o,i)=>{
+            const pct = (o.price*100);
+            const isTop = i === 0;
+            const isSel = selectedOutcome === i;
+            return (
+              <div key={i} onClick={()=>{setSelectedOutcome(i);setActiveTab("trade");}}
+                className="btn-press" style={{display:"flex",alignItems:"center",gap:10,padding:"10px 12px",marginBottom:4,
+                  borderRadius:12,cursor:"pointer",transition:"all 0.2s",
+                  background:isSel?"var(--accent-bg)":isTop?"var(--green-bg)":"var(--surface)",
+                  border:isSel?"2px solid var(--accent)":isTop?"1px solid var(--green-bd)":"1px solid var(--border)"}}>
+                <div style={{width:26,height:26,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",
+                  background:isSel?"var(--accent)":isTop?"var(--green)":"var(--bg)",
+                  color:isSel||isTop?"#fff":"var(--text3)",fontSize:11,fontWeight:800}}>{i+1}</div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:600,color:"var(--text)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{o.name}</div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
+                  <div style={{width:60,height:6,borderRadius:3,background:"var(--bg)",overflow:"hidden"}}>
+                    <div style={{width:`${Math.min(pct,100)}%`,height:"100%",borderRadius:3,
+                      background:isTop?"var(--green)":isSel?"var(--accent)":`hsl(${210-i*15},50%,60%)`}} />
+                  </div>
+                  <span style={{fontSize:14,fontWeight:800,color:isTop?"var(--green)":isSel?"var(--accent)":"var(--text)",
+                    fontFamily:"var(--mono)",minWidth:42,textAlign:"right"}}>{pct<1?pct.toFixed(1):pct.toFixed(0)}%</span>
+                </div>
+              </div>
+            );
+          })}
+          {market.outcomes.length>6 && (
+            <div onClick={()=>setShowAllOutcomes(!showAllOutcomes)} className="btn-press"
+              style={{textAlign:"center",padding:"8px",fontSize:12,color:"var(--accent)",fontWeight:600,cursor:"pointer",marginTop:4}}>
+              {showAllOutcomes ? "收起 ↑" : `展开全部 ${market.outcomes.length} 个选项 ↓`}
+            </div>
+          )}
+        </div>
+      ) : (
+      /* Binary: Big price */
       <div style={{padding:"20px 0",textAlign:"center"}}>
         <div style={{fontSize:11,color:"var(--text3)",marginBottom:4}}>当前概率</div>
         <div style={{fontSize:52,fontWeight:900,color:"var(--green)",fontFamily:"var(--mono)",letterSpacing:-2}}>
@@ -260,6 +325,7 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
           24h {market.change24h>=0?"↑":"↓"} {Math.abs(market.change24h*100).toFixed(1)}%
         </div>
       </div>
+      )}
 
       {/* Chart */}
       <div style={{background:"var(--surface)",borderRadius:16,padding:16,marginBottom:14,border:"1px solid var(--border)",boxShadow:"var(--shadow)"}}>
@@ -281,7 +347,7 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
 
       {/* Stats */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:8,marginBottom:14}}>
-        {[{l:"交易量",v:`¥${fmt(market.volume)}`},{l:"流动性",v:`¥${fmt(market.liquidity)}`},{l:"参与者",v:`${fmt(market.traders)}人`}].map(s=>(
+        {[{l:"交易量",v:`$${fmt(market.volume)}`},{l:"流动性",v:`$${fmt(market.liquidity)}`},{l:"参与者",v:`${fmt(market.traders)}人`}].map(s=>(
           <div key={s.l} style={{background:"var(--surface)",borderRadius:12,padding:12,textAlign:"center",border:"1px solid var(--border)"}}>
             <div style={{fontSize:10,color:"var(--text3)",marginBottom:3}}>{s.l}</div>
             <div style={{fontSize:14,fontWeight:700,color:"var(--text)",fontFamily:"var(--mono)"}}>{s.v}</div>
@@ -304,7 +370,7 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
             return (
               <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <span style={{fontSize:13,color:"var(--text)"}}>
-                  <span style={{color:p.side==="yes"?"var(--green)":"var(--red)",fontWeight:700}}>{p.side==="yes"?"看涨":"看跌"}</span> · {p.shares}份 · 均价{(p.avgPrice*100).toFixed(0)}¢
+                  <span style={{color:p.side==="yes"?"var(--green)":"var(--red)",fontWeight:700}}>{p.side==="yes"?"是":"否"}</span> · {p.shares}份 · 均价{(p.avgPrice*100).toFixed(0)}¢
                 </span>
                 <span style={{fontSize:13,fontWeight:800,color:pnl>=0?"var(--green)":"var(--red)",fontFamily:"var(--mono)"}}>
                   {pnl>=0?"+":""}${pnl.toFixed(2)}
@@ -329,22 +395,70 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
       {/* Trade Panel */}
       {activeTab==="trade" && (
         <div style={{background:"var(--surface)",borderRadius:20,padding:20,border:"1px solid var(--border-s)",boxShadow:"var(--shadow)"}}>
+          {/* Multi-outcome: outcome selector */}
+          {isMulti ? (
+            <div style={{marginBottom:16}}>
+              {selectedOutcome === null ? (
+                <div style={{textAlign:"center",padding:"20px 0"}}>
+                  <div style={{fontSize:32,marginBottom:8}}>☝️</div>
+                  <div style={{fontSize:14,color:"var(--text2)",fontWeight:600}}>请先在上方选择一个选项</div>
+                  <div style={{fontSize:12,color:"var(--text3)",marginTop:4}}>点击任意选项即可开始交易</div>
+                </div>
+              ) : (
+                <>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,padding:"10px 14px",borderRadius:12,
+                    background:"var(--accent-bg)",border:"1px solid var(--accent-bd)"}}>
+                    <div style={{width:28,height:28,borderRadius:8,background:"var(--accent)",color:"#fff",
+                      display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:800}}>
+                      {selectedOutcome+1}
+                    </div>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:14,fontWeight:700,color:"var(--text)"}}>{market.outcomes[selectedOutcome].name}</div>
+                      <div style={{fontSize:11,color:"var(--text3)"}}>当前概率</div>
+                    </div>
+                    <div style={{fontSize:24,fontWeight:900,color:"var(--accent)",fontFamily:"var(--mono)"}}>
+                      {(market.outcomes[selectedOutcome].price*100).toFixed(market.outcomes[selectedOutcome].price<0.1?1:0)}%
+                    </div>
+                  </div>
+                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+                    <div onClick={()=>setSide("yes")} className="btn-press"
+                      style={{padding:12,borderRadius:12,cursor:"pointer",textAlign:"center",
+                        background:side==="yes"?"var(--green-bg)":"var(--bg)",
+                        border:side==="yes"?"2px solid var(--green)":"2px solid var(--border)",transition:"all 0.2s"}}>
+                      <div style={{fontSize:12,color:side==="yes"?"var(--green)":"var(--text3)",fontWeight:600}}>是 YES</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.outcomes[selectedOutcome].price*100).toFixed(0)}¢</div>
+                    </div>
+                    <div onClick={()=>setSide("no")} className="btn-press"
+                      style={{padding:12,borderRadius:12,cursor:"pointer",textAlign:"center",
+                        background:side==="no"?"var(--red-bg)":"var(--bg)",
+                        border:side==="no"?"2px solid var(--red)":"2px solid var(--border)",transition:"all 0.2s"}}>
+                      <div style={{fontSize:12,color:side==="no"?"var(--red)":"var(--text3)",fontWeight:600}}>否 NO</div>
+                      <div style={{fontSize:20,fontWeight:900,color:"var(--red)",fontFamily:"var(--mono)"}}>{((1-market.outcomes[selectedOutcome].price)*100).toFixed(0)}¢</div>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+          /* Binary: Yes/No selector */
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
             <div onClick={()=>setSide("yes")} className="btn-press"
               style={{padding:14,borderRadius:12,cursor:"pointer",textAlign:"center",
                 background:side==="yes"?"var(--green-bg)":"var(--bg)",
                 border:side==="yes"?"2px solid var(--green)":"2px solid var(--border)",transition:"all 0.2s"}}>
-              <div style={{fontSize:12,color:side==="yes"?"var(--green)":"var(--text3)",fontWeight:600}}>看涨 YES</div>
+              <div style={{fontSize:12,color:side==="yes"?"var(--green)":"var(--text3)",fontWeight:600}}>是 YES</div>
               <div style={{fontSize:24,fontWeight:900,color:"var(--green)",fontFamily:"var(--mono)"}}>{(market.yesPrice*100).toFixed(0)}¢</div>
             </div>
             <div onClick={()=>setSide("no")} className="btn-press"
               style={{padding:14,borderRadius:12,cursor:"pointer",textAlign:"center",
                 background:side==="no"?"var(--red-bg)":"var(--bg)",
                 border:side==="no"?"2px solid var(--red)":"2px solid var(--border)",transition:"all 0.2s"}}>
-              <div style={{fontSize:12,color:side==="no"?"var(--red)":"var(--text3)",fontWeight:600}}>看跌 NO</div>
+              <div style={{fontSize:12,color:side==="no"?"var(--red)":"var(--text3)",fontWeight:600}}>否 NO</div>
               <div style={{fontSize:24,fontWeight:900,color:"var(--red)",fontFamily:"var(--mono)"}}>{(market.noPrice*100).toFixed(0)}¢</div>
             </div>
           </div>
+          )}
+          {(!isMulti || selectedOutcome !== null) && (<>
           <div style={{marginBottom:12}}>
             <div style={{fontSize:11,color:"var(--text3)",marginBottom:6,fontWeight:600}}>投入金额 (USDT)</div>
             <div style={{display:"flex",alignItems:"center",background:"var(--bg)",borderRadius:12,border:"1px solid var(--border-s)",padding:"0 14px"}}>
@@ -378,8 +492,11 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
               background:!amount||parseFloat(amount)<=0?"#C8CBD8":side==="yes"?"linear-gradient(135deg,#00A878,#00C896)":"linear-gradient(135deg,#D42E47,#E5384F)",
               opacity:amount&&parseFloat(amount)>0?1:0.6,transition:"all 0.2s",
               boxShadow:amount&&parseFloat(amount)>0?(side==="yes"?"0 6px 20px rgba(0,168,120,0.3)":"0 6px 20px rgba(229,56,79,0.3)"):"none"}}>
-            {side==="yes"?"🟢 买入看涨":"🔴 买入看跌"}
+            {isMulti&&selectedOutcome!==null
+              ? (side==="yes"?"🟢 买入 "+market.outcomes[selectedOutcome].name:"🔴 做空 "+market.outcomes[selectedOutcome].name)
+              : (side==="yes"?"🟢 买入 YES":"🔴 买入 NO")}
           </div>
+          </>)}
         </div>
       )}
 
@@ -420,7 +537,7 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
           {ACTIVITY_FEED.map((a,i)=>(
             <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"10px 0",borderBottom:i<ACTIVITY_FEED.length-1?"1px solid var(--border)":"none"}}>
               <div style={{width:32,height:32,borderRadius:8,background:"var(--accent-bg)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14}}>
-                {a.action.includes("涨")?"🟢":"🔴"}
+                {a.action.includes("是")?"🟢":"🔴"}
               </div>
               <div style={{flex:1}}>
                 <div style={{fontSize:13,color:"var(--text)"}}><b>{a.user}</b> {a.action}</div>
@@ -447,8 +564,14 @@ function MarketDetail({market, positions, onBack, onTrade, onToast}) {
             </div>
             <div style={{background:"var(--bg)",borderRadius:12,padding:14,marginBottom:20}}>
               <div style={{fontSize:13,color:"var(--text2)",marginBottom:10,lineHeight:1.5}}>{market.title}</div>
-              {[{l:"方向",v:side==="yes"?"看涨 YES":"看跌 NO",c:side==="yes"?"var(--green)":"var(--red)"},
-                {l:"价格",v:`${(price*100).toFixed(0)}¢`,c:"var(--text)"},
+              {isMulti&&selectedOutcome!==null && (
+                <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+                  <span style={{fontSize:13,color:"var(--text3)"}}>选项</span>
+                  <span style={{fontSize:13,fontWeight:700,color:"var(--accent)",fontFamily:"var(--mono)"}}>{market.outcomes[selectedOutcome].name}</span>
+                </div>
+              )}
+              {[{l:"方向",v:side==="yes"?"是 YES":"否 NO",c:side==="yes"?"var(--green)":"var(--red)"},
+                {l:"价格",v:`${(tradePrice*100).toFixed(0)}¢`,c:"var(--text)"},
                 {l:"金额",v:`$${amount}`,c:"var(--text)"},
                 {l:"份额",v:`${shares} 份`,c:"var(--text)"},
                 {l:"潜在收益",v:`+$${profit.toFixed(2)} (${((profit/parseFloat(amount))*100).toFixed(0)}%)`,c:"var(--green)"},
@@ -542,7 +665,7 @@ function Portfolio({markets, positions, balance, onSell, onToast}) {
                 <div style={{display:"inline-block",padding:"2px 8px",borderRadius:6,fontSize:10,fontWeight:700,
                   background:pos.side==="yes"?"var(--green-bg)":"var(--red-bg)",
                   color:pos.side==="yes"?"var(--green)":"var(--red)"}}>
-                  {pos.side==="yes"?"看涨":"看跌"} · {pos.shares}份
+                  {pos.side==="yes"?"是":"否"} · {pos.shares}份
                 </div>
               </div>
               <div style={{textAlign:"right"}}>
@@ -602,7 +725,7 @@ function LeaderboardView() {
                 paddingTop:8,border:`1px solid ${bd[i]}`,borderBottom:"none"}}>
                 <div style={{fontSize:22}}>{lb[i]}</div>
                 <div style={{fontSize:11,fontWeight:800,color:"var(--text)",marginTop:4}}>{p.name}</div>
-                <div style={{fontSize:10,color:"var(--green)",fontWeight:700,fontFamily:"var(--mono)",marginTop:2}}>+¥{fmt(p.profit)}</div>
+                <div style={{fontSize:10,color:"var(--green)",fontWeight:700,fontFamily:"var(--mono)",marginTop:2}}>+${fmt(p.profit)}</div>
                 <div style={{fontSize:9,color:"var(--text3)",marginTop:1}}>胜率{(p.winRate*100).toFixed(0)}%</div>
               </div>
             </div>
@@ -620,7 +743,7 @@ function LeaderboardView() {
             <div style={{fontSize:14,fontWeight:700,color:"var(--text)"}}>{p.name}</div>
             <div style={{fontSize:11,color:"var(--text3)"}}>胜率 {(p.winRate*100).toFixed(0)}% · {p.trades}笔</div>
           </div>
-          <div style={{fontSize:14,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>+¥{fmt(p.profit)}</div>
+          <div style={{fontSize:14,fontWeight:800,color:"var(--green)",fontFamily:"var(--mono)"}}>+${fmt(p.profit)}</div>
         </div>
       ))}
     </div>
