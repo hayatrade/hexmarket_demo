@@ -189,7 +189,6 @@ function MarketCard({market, onClick, delay=0}) {
             display:"-webkit-box",WebkitLineClamp:2,WebkitBoxOrient:"vertical",overflow:"hidden"}}>{market.title}</div>
         </div>
       </div>
-      <ProbBar yes={market.yesPrice} outcomes={market.outcomes} />
       {/* Multi-outcome: show top outcomes */}
       {market.outcomes ? (
         <div style={{marginTop:12}}>
